@@ -31,18 +31,18 @@ public class ReacherAgent : Agent
     // Frequency of the cosine deviation of the goal along the vertical dimension
     float m_DeviationFreq;
     public int NewTargetActive;
-    
+
     Vector3 PrevHandPos;
     Vector3 CenterLocation = new Vector3(0, -8, 0);
 
 
-    //// Adds zero paddings of size 1x4 to observation vector
-    //public float AddZeroPadding;
-    //// Adds next target hot encoded identity to observation vector
-    //public float AddNextTargetInfo = 1;
-    //// Adds hot encoded noise identity from a discrete uniform to the observation vector
-    //public float AddUniformNoiseInfo;
-    //public List<int> ShuffledIdList = new List<int>() { 1, 0, 0, 0 };
+    // Adds zero paddings of size 1x4 to observation vector
+    public float AddZeroPadding;
+    // Adds next target hot encoded identity to observation vector
+    public float AddNextTargetInfo = 1;
+    // Adds hot encoded noise identity from a discrete uniform to the observation vector
+    public float AddUniformNoiseInfo;
+    public List<int> ShuffledIdList = new List<int>() { 1, 0, 0, 0 };
     public bool ShuffleSwitch = false;
 
     StatsRecorder m_Recorder;
@@ -88,51 +88,34 @@ public class ReacherAgent : Agent
         sensor.AddObservation(goal.transform.localPosition);
         sensor.AddObservation(hand.transform.localPosition);
 
+        // Add next target information as one-hot encoded to observation vec
         sensor.AddObservation(NextTarget == 0 ? 1.0f : 0.0f);
         sensor.AddObservation(NextTarget == 1 ? 1.0f : 0.0f);
         sensor.AddObservation(NextTarget == 2 ? 1.0f : 0.0f);
         sensor.AddObservation(NextTarget == 3 ? 1.0f : 0.0f);
 
+        // Add zero padding to observation vec
         //sensor.AddObservation(0);
         //sensor.AddObservation(0);
         //sensor.AddObservation(0);
         //sensor.AddObservation(0);
 
-        //if (AddNextTargetInfo == 1)
+        // Add shuffled one-hot encoded to observation vec
+        // Two steps: 1. shuffle once if switch marker is set to false
+        //            2. add shuffled list elements to observation vec
+        //if (ShuffleSwitch == false)
         //{
-        //    // Next target identity hot encoded
-        //    sensor.AddObservation(NextTarget == 0 ? 1.0f : 0.0f);
-        //    sensor.AddObservation(NextTarget == 1 ? 1.0f : 0.0f);
-        //    sensor.AddObservation(NextTarget == 2 ? 1.0f : 0.0f);
-        //    sensor.AddObservation(NextTarget == 3 ? 1.0f : 0.0f);
-        //    m_Recorder.Add("Added next target identity", 1);
+        //    ShuffledIdList = ShuffledIdList.OrderBy(a => System.Guid.NewGuid()).ToList();
+        //    ShuffleSwitch = true;
         //}
-        //else if (AddUniformNoiseInfo == 1)
+        //else
         //{
-        //    // Discrete uniform random noise or randomized hot encoded identity
-        //    if (ShuffleSwitch == false)
-        //    {
-        //        ShuffledIdList = ShuffledIdList.OrderBy(a => System.Guid.NewGuid()).ToList();
-        //        ShuffleSwitch = true;
-        //    }
-        //    else
-        //    {
-
-        //    }
-        //    sensor.AddObservation(ShuffledIdList[0]);
-        //    sensor.AddObservation(ShuffledIdList[1]);
-        //    sensor.AddObservation(ShuffledIdList[2]);
-        //    sensor.AddObservation(ShuffledIdList[3]);
-        //    m_Recorder.Add("Added discrete uniform noise", 1);
+        //    // Do nothing
         //}
-        //else if (AddZeroPadding == 1)
-        //{
-        //    sensor.AddObservation(0);
-        //    sensor.AddObservation(0);
-        //    sensor.AddObservation(0);
-        //    sensor.AddObservation(0);
-        //    m_Recorder.Add("Added zero padding", 1);
-        //}
+        //sensor.AddObservation(ShuffledIdList[0]);
+        //sensor.AddObservation(ShuffledIdList[1]);
+        //sensor.AddObservation(ShuffledIdList[2]);
+        //sensor.AddObservation(ShuffledIdList[3]);
 
         // Add touch of target to observation vector
         if (JustTouchedTarget)
@@ -149,12 +132,6 @@ public class ReacherAgent : Agent
 
         m_Recorder.Add("Distance to base", Vector3.Distance(new Vector3(0f, -8.0f, 0f), (hand.transform.position - transform.position)));
         m_Recorder.Add("Distance moved", MoveSpeed);
-
-        //m_Recorder.Add("Quick movement scalar", QuickMovementScalar);
-        //m_Recorder.Add("Time Decay", TimeDecay);
-        //m_Recorder.Add("Minimum Reward", MinReward);
-        //m_Recorder.Add("Torque force", torqueForce);
-        //m_Recorder.Add("Movement penality", MovePenalty);
 
         RewardToGet *= TimeDecay;
         RewardToGet = Mathf.Max(MinReward, RewardToGet);
@@ -204,18 +181,6 @@ public class ReacherAgent : Agent
             TimeTargetActive = Time.frameCount;
             RewardToGet = 1.0f;
         }
-
-        // if the ITI is active collect x,y,z coordinates of hand location
-        //else if (JustTouchedTarget && Time.frameCount - TimeTargetTouched < 500)
-        //{
-        //    Vector3 HandPointCloud = (hand.transform.position - transform.position);
-        //    float Handx = HandPointCloud[0];
-        //    float Handy = HandPointCloud[1];
-        //    float Handz = HandPointCloud[2];
-        //    m_Recorder.Add("Hand x coordinate during ITI", Handx);
-        //    m_Recorder.Add("Hand y coordinate during ITI", Handy);
-        //    m_Recorder.Add("Hand z coordinate during ITI", Handz);
-        //}
 
         var radians = m_GoalDegree * Mathf.PI / 180f;
         var goalX = 8f * Mathf.Cos(radians);
@@ -295,10 +260,5 @@ public class ReacherAgent : Agent
         TimeDecay = m_ResetParams.GetWithDefault("TimeDecay", 0.992f);
         MinReward = m_ResetParams.GetWithDefault("MinReward", 0.7f);
         RewardToGet = m_ResetParams.GetWithDefault("RewardToGet", 1.0f);
-        //torqueForce = m_ResetParams.GetWithDefault("torqueForce", 50f);
-
-        //AddNextTargetInfo = m_ResetParams.GetWithDefault("AddNextTargetInfo", 1f);
-        //AddZeroPadding = m_ResetParams.GetWithDefault("AddZeroPadding", 0f);
-        //AddUniformNoiseInfo = m_ResetParams.GetWithDefault("AddUniformNoiseInfo", 0f);
     }
 }
