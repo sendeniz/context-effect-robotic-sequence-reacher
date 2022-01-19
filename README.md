@@ -8,13 +8,14 @@ This repo contains a fully articulated robotic arm controller solving a sequenti
 
 **Training:**
 <br>
-To train and replicate results it is recommended to 1) create your own executable build within the Unity environment via the "**File/Build Setting**" tab and 2) create a corresponding shell "**.shl**" file to train from scratch. Please select the corresponding target platform you wish to run the executable one. An example for a shell file to train PPO is given below: 
+To train and replicate results it is recommended to 1) create your own executable build within the Unity environment via the "**File/Build Setting**" tab and 2) create a corresponding shell "**.shl**" file to train from scratch. Please select the corresponding target platform (maxos, linux etc.) you wish to run the executable one. An example for a shell file to train PPO is given below: 
 
 ```
 your_shell_file.sh
 ```
 
 ```
+# your_shell_file content
 #!/bin/bash
 for i in {1..3}
 do
